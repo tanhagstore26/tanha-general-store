@@ -253,7 +253,7 @@
                         <i class="fa-solid fa-file-invoice-dollar"></i> সকল কাস্টমারের বিস্তারিত লেনদেন রিপোর্ট
                     </button>
                     <button class="btn btn-success btn-block" onclick="manualSaveData()" style="margin-bottom: 10px;">
-                        <i class="fa-solid fa-floppy-disk"></i> সকল তথ্য সেভ করুন (Save Data)
+                        <i class="fa-solid fa-cloud-arrow-up"></i> ক্লাউডে ব্যাকআপ সেভ করুন (Sync Cloud)
                     </button>
 
                     <button class="btn btn-primary btn-block" onclick="exportBackupData()" style="margin-bottom: 10px;">
@@ -332,7 +332,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>বিবরণ / নোট (অপショナル)</label>
+                            <label>বিবরণ / নোট (অপশনাল)</label>
                             <input type="text" id="transDesc" class="form-control" placeholder="যেমন: নগদ পরিশোধ / নতুন মালামাল বিক্রি">
                         </div>
                         <div class="form-group">
@@ -448,6 +448,9 @@
 </div>
 
 <script>
+    // ⚠️ আপনার Google Apps Script এর Web App URL-টি নিচে বসিয়ে দিন
+    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycby7zDskBWIbu2yw7gZRzG18FIOo40SR0Kk-JRWB4SSaOjZGhygbur99Mcds7CwY1vT/exec";
+
     const STORE_NAME = "তানহা জেনারেল স্টোর";
     const STORE_MOBILE = "01929611713";
 
@@ -687,18 +690,33 @@
         });
     }
 
-    // Direct LocalStorage Save
+    // Direct LocalStorage & Cloud Save
     function saveData() {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
+            syncWithGoogleSheet(); // Auto Cloud Sync
         } catch (e) {
             alert('ব্রাউজারের মেমোরিতে সেভ হতে সমস্যা হচ্ছে!');
         }
     }
 
+    // Google Sheets Auto Sync Function
+    function syncWithGoogleSheet() {
+        if(!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes("এখানে_আপনার")) return;
+        
+        fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: "sync_all", customers: customers })
+        }).then(() => {
+            console.log("Cloud sync completed!");
+        }).catch(err => console.error("Cloud Sync Error:", err));
+    }
+
     function manualSaveData() {
         saveData();
-        showToast("✅ সকল কাস্টমার ও বাকি হিসাব নিরাপদে সেভ করা হয়েছে!");
+        showToast("✅ সকল ডাটা নিরাপদে ক্লাউড ও মেমোরিতে সেভ করা হয়েছে!");
     }
 
     function exportBackupData() {
